@@ -245,7 +245,7 @@
                         <option value="python">Python 3</option>
                         <option value="javascript">JavaScript (Node.js)</option>
                         <option value="cpp">C++ (GCC)</option>
-                        <option value="java">Java 17</option>
+                        <option value="java" selected>Java 17</option>
                     </select>
                 </div>
 
@@ -609,20 +609,20 @@
 
             setTimeout(() => {
                 term.innerHTML += `<span class="text-slate-400">[Executing local testcase 1]...</span>\n`;
-                term.innerHTML += `<span class="text-emerald-400">Standard Output:</span>\n${currentProblem.sampleCases[0].output}\n\n`;
+                term.innerHTML += `<span class="text-emerald-400">Standard Output:</span>\n${currentProblem.sampleCases[0]?.output || 'Success'}\n\n`;
                 term.innerHTML += `<span class="text-slate-500">Program selesai dalam 0.04s. Exit Code: 0</span>`;
             }, 600);
         }
 
-        // CALL GEMINI API HELPER (WITH MULTI-MODEL FALLBACK)
+        // CALL GEMINI API HELPER (ROBUST MULTI-MODEL FALLBACK)
         async function callGeminiAPI(prompt) {
             if (!apiKey) {
                 openApiKeyModal();
                 throw new Error("API Key belum dikonfigurasi.");
             }
 
-            // Daftar model yang dicoba berurutan jika server sibuk / overload
-            const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+            // Model resmi yang aktif di Google Gemini API v1beta
+            const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
             let lastError = null;
 
             for (const model of models) {
@@ -636,23 +636,22 @@
                         })
                     });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                            return data.candidates[0].content.parts[0].text;
-                        }
+                    const data = await response.json();
+
+                    if (response.ok && data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        return data.candidates[0].content.parts[0].text;
                     }
 
-                    const errData = await response.json().catch(() => ({}));
-                    lastError = new Error(errData.error?.message || `Error pada model ${model} (Status:${response.status})`);
-                    console.warn(`Model ${model} gagal, mencoba model berikutnya...`, lastError.message);
+                    const errorMsg = data.error?.message || `Status: ${response.status}`;
+                    console.warn(`Model ${model} tidak merespons (${errorMsg}), mencoba model berikutnya...`);
+                    lastError = new Error(errorMsg);
+
                 } catch (err) {
                     lastError = err;
-                    console.warn(`Gagal menghubungi model ${model}:`, err);
                 }
             }
 
-            throw lastError || new Error("Semua server Gemini AI sedang padat. Silakan coba lagi sebentar lagi.");
+            throw lastError || new Error("Semua server AI sedang sibuk. Silakan coba lagi sebentar.");
         }
 
         // SUBMIT & AI EVALUATION (AUTO-GRADER)
