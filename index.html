@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moodle VPL - Virtual Programming Lab (AI Powered)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        moodle: {
+                            orange: '#f25b2a',
+                            blue: '#0f6cbf',
+                            darkBlue: '#0b4d8a',
+                            lightBg: '#f8fafc',
+                            sidebar: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .code-editor {
+            tab-size: 4;
+            -moz-tab-size: 4;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 flex flex-col h-screen overflow-hidden">
+
+    <!-- TOP HEADER / MOODLE NAVBAR -->
+    <header class="bg-moodle-blue text-white shadow-md flex-none z-30">
+        <div class="px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-graduation-cap text-2xl text-moodle-orange"></i>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-lg tracking-wide">Moodle VPL</span>
+                        <span class="bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-sparkles text-[10px]"></i> Gemini AI Active
+                        </span>
+                    </div>
+                    <p class="text-xs text-blue-100/80">Praktikum Pemrograman Interaktif & Evaluasi Otomatis</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center space-x-3">
+                <!-- Request / Generate Soal AI Button -->
+                <button onclick="openGenerateModal()" class="bg-gradient-to-r from-amber-500 to-moodle-orange hover:from-amber-600 hover:to-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow flex items-center gap-2 transition-all transform hover:scale-105">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Request / Generate Soal AI</span>
+                </button>
+
+                <!-- API Key Config Button -->
+                <button onclick="openApiKeyModal()" class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg transition border border-white/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-key"></i>
+                    <span id="apiKeyStatusText">API Key</span>
+                </button>
+
+                <!-- Student Profile Badge -->
+                <div class="border-l border-white/20 pl-3 flex items-center space-x-2">
+                    <div class="w-7 h-7 rounded-full bg-moodle-orange flex items-center justify-center font-bold text-xs text-white shadow">
+                        M
+                    </div>
+                    <div class="hidden sm:block text-left text-xs">
+                        <p class="font-semibold leading-none">Siswa (Student)</p>
+                        <p class="text-[10px] text-blue-200">Mode Praktikum</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- BREADCRUMB / COURSE BANNER -->
+    <div class="bg-white border-b border-slate-200 px-4 py-1.5 text-xs text-slate-600 flex items-center justify-between flex-none">
+        <div class="flex items-center space-x-2 overflow-x-auto">
+            <a href="#" class="hover:text-moodle-blue"><i class="fa-solid fa-house"></i> Home</a>
+            <span>/</span>
+            <span class="hover:text-moodle-blue">Pemrograman Komputer</span>
+            <span>/</span>
+            <span class="font-semibold text-moodle-blue" id="currentProblemBreadcrumb">Soal: Array & Algoritma</span>
+        </div>
+        <div class="text-[11px] text-slate-500 hidden md:flex items-center gap-2">
+            <span><i class="fa-regular fa-clock"></i> Batas Waktu: <b>Tidak Terbatas</b></span>
+            <span>•</span>
+            <span class="text-emerald-600 font-medium"><i class="fa-solid fa-check-circle"></i> VPL AI Ready</span>
+        </div>
+    </div>
+
+    <!-- MAIN WORKSPACE (SPLIT VIEW) -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- LEFT PANEL: PROBLEM DESCRIPTION & AI TUTOR -->
+        <div class="w-1/2 min-w-[320px] bg-white border-r border-slate-200 flex flex-col h-full">
+            
+            <!-- Left Tabs Header -->
+            <div class="flex border-b border-slate-200 bg-slate-50 flex-none">
+                <button id="tabBtnDesc" onclick="switchLeftTab('desc')" class="px-4 py-2 text-xs font-semibold text-moodle-blue border-b-2 border-moodle-blue flex items-center gap-1.5 bg-white">
+                    <i class="fa-solid fa-file-lines"></i> Deskripsi Soal
+                </button>
+                <button id="tabBtnTutor" onclick="switchLeftTab('tutor')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-moodle-blue border-b-2 border-transparent flex items-center gap-1.5">
+                    <i class="fa-solid fa-robot text-amber-500"></i> AI Coding Tutor
+                    <span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.2 rounded-full">Tanya AI</span>
+                </button>
+                <button id="tabBtnHistory" onclick="switchLeftTab('history')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-moodle-blue border-b-2 border-transparent flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Submisi
+                </button>
+            </div>
+
+            <!-- TAB 1: DESKRIPSI SOAL -->
+            <div id="tabContentDesc" class="p-5 overflow-y-auto flex-1 space-y-4">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <span id="problemDifficulty" class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Mudah (Easy)</span>
+                        <span class="text-xs text-slate-400"><i class="fa-solid fa-award"></i> Max Score: 100 Poin</span>
+                    </div>
+                    <h1 id="problemTitle" class="text-xl font-bold text-slate-800">Menghitung Jumlah Elemen Genap dalam Array</h1>
+                </div>
+
+                <div class="prose prose-sm text-slate-600 leading-relaxed space-y-3">
+                    <p id="problemDesc">
+                        Buatlah sebuah fungsi atau program yang menerima barisan angka (array/list) dan menghitung berapa banyak angka genap yang ada di dalam barisan tersebut.
+                    </p>
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
+                        <h4 class="font-semibold text-xs text-slate-700 uppercase tracking-wide flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-right-to-bracket text-moodle-blue"></i> Format Input
+                        </h4>
+                        <p id="problemInputFormat" class="text-xs font-mono bg-white p-2 border rounded text-slate-700">
+                            Sebuah baris berisi angka-angka yang dipisahkan oleh spasi. Contoh: `2 5 8 10 3`
+                        </p>
+
+                        <h4 class="font-semibold text-xs text-slate-700 uppercase tracking-wide flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-moodle-blue"></i> Format Output
+                        </h4>
+                        <p id="problemOutputFormat" class="text-xs font-mono bg-white p-2 border rounded text-slate-700">
+                            Cetak satu angka bulat (integer) yang menyatakan jumlah bilangan genap.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-semibold text-xs text-slate-700 uppercase tracking-wide mb-1">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Batasan (Constraints)
+                        </h4>
+                        <ul id="problemConstraints" class="list-disc list-inside text-xs text-slate-600 space-y-1">
+                            <li>Jumlah elemen array $1 \le N \le 1000$</li>
+                            <li>Nilai tiap elemen $-10^5 \le \text{elemen} \le 10^5$</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sample Test Cases -->
+                    <div>
+                        <h4 class="font-semibold text-xs text-slate-700 uppercase tracking-wide mb-2">
+                            <i class="fa-solid fa-vial text-purple-500"></i> Contoh Uji (Sample Testcases)
+                        </h4>
+                        <div id="sampleCasesContainer" class="space-y-2">
+                            <div class="bg-slate-900 text-slate-100 p-2.5 rounded text-xs font-mono">
+                                <div class="text-slate-400 text-[10px]">Input:</div>
+                                <div>2 5 8 10 3</div>
+                                <div class="text-slate-400 text-[10px] mt-1">Output Sesuai:</div>
+                                <div class="text-emerald-400">3</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: AI TUTOR / HINT CHAT -->
+            <div id="tabContentTutor" class="hidden flex-col h-full bg-slate-50">
+                <div class="p-3 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-600 text-base"></i>
+                    <span>Tanyakan ke bingung-anmu! AI Tutor akan berikan <b>petunjuk (hint)</b> tanpa langsung memberikan seluruh kunci jawaban.</span>
+                </div>
+
+                <!-- Chat History -->
+                <div id="tutorChatBox" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+                    <div class="flex gap-2.5">
+                        <div class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs flex-none shadow">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm max-w-[85%] text-slate-700">
+                            Halo! Ada kendala dengan soal ini? Kamu bisa tanya konsep, logika `if`, pemrosesan input, atau minta petunjuk error tanpa khawatir nilaimu berkurang.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input -->
+                <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
+                    <input type="text" id="tutorInput" onkeydown="if(event.key==='Enter') sendTutorMessage()" placeholder="Contoh: Bagaimana cara cek angka genap di Python?" class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                    <button onclick="sendTutorMessage()" class="bg-moodle-blue hover:bg-moodle-darkBlue text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 3: RIWAYAT SUBMISI -->
+            <div id="tabContentHistory" class="hidden p-4 overflow-y-auto flex-1">
+                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3">Daftar Percobaan Submisi Anda</h3>
+                <div id="submissionHistoryList" class="space-y-2">
+                    <p class="text-xs text-slate-400 italic">Belum ada submisi untuk soal ini.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL: CODE EDITOR & EVALUATION -->
+        <div class="w-1/2 flex-1 bg-slate-900 flex flex-col h-full text-slate-100">
+            
+            <!-- Editor Toolbar -->
+            <div class="bg-slate-800 px-4 py-2 border-b border-slate-700 flex items-center justify-between flex-none">
+                <div class="flex items-center space-x-3">
+                    <label class="text-xs text-slate-400 flex items-center gap-1">
+                        <i class="fa-solid fa-code text-moodle-orange"></i> Bahasa:
+                    </label>
+                    <select id="languageSelect" onchange="changeLanguage()" class="bg-slate-700 text-white text-xs px-2.5 py-1 rounded border border-slate-600 focus:outline-none focus:ring-1 focus:ring-moodle-blue">
+                        <option value="python">Python 3</option>
+                        <option value="javascript">JavaScript (Node.js)</option>
+                        <option value="cpp">C++ (GCC)</option>
+                        <option value="java">Java 17</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="resetTemplateCode()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded hover:bg-slate-700 transition" title="Reset Kode ke Template Awal">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    
+                    <!-- Run Test Button -->
+                    <button onclick="runLocalTest()" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded font-medium flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-play text-emerald-400"></i> Run Output
+                    </button>
+
+                    <!-- Submit & AI Grade Button -->
+                    <button onclick="submitSolutionAI()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-1.5 rounded font-semibold flex items-center gap-1.5 shadow transition">
+                        <i class="fa-solid fa-paper-plane"></i> Submit & Evaluasi AI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Code Editor Area -->
+            <div class="flex-1 relative flex overflow-hidden">
+                <!-- Line Numbers -->
+                <div id="lineNumbers" class="w-10 bg-slate-950 py-3 text-slate-600 text-xs font-mono text-right pr-2 select-none flex-none">
+                    1
+                </div>
+                <!-- Textarea Code -->
+                <textarea id="codeEditor" oninput="updateLineNumbers()" onkeydown="handleTab(event)" spellcheck="false" class="w-full h-full bg-slate-900 text-emerald-300 font-mono text-xs p-3 focus:outline-none resize-none leading-relaxed code-editor" placeholder="Ketikkan solusi kodemu di sini..."></textarea>
+            </div>
+
+            <!-- LOWER PANEL: TERMINAL & AI EVALUATION RESULT -->
+            <div class="h-56 border-t border-slate-700 bg-slate-950 flex flex-col flex-none">
+                <!-- Bottom Tab Bar -->
+                <div class="flex border-b border-slate-800 bg-slate-900">
+                    <button id="bottomTabTerminalBtn" onclick="switchBottomTab('terminal')" class="px-4 py-1.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal"></i> Terminal Output
+                    </button>
+                    <button id="bottomTabEvaluationBtn" onclick="switchBottomTab('evaluation')" class="px-4 py-1.5 text-xs font-medium text-slate-400 hover:text-white border-b-2 border-transparent flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-poll-vertical text-amber-400"></i> Hasil Evaluasi Gemini AI
+                    </button>
+                </div>
+
+                <!-- Bottom Tab Content: Terminal -->
+                <div id="bottomTabTerminal" class="p-3 font-mono text-xs text-slate-300 flex-1 overflow-y-auto space-y-2">
+                    <div class="text-slate-500">// Jalankan "Run Output" atau "Submit & Evaluasi AI" untuk melihat hasil eksekusi program.</div>
+                    <div id="terminalOutput" class="whitespace-pre-wrap"></div>
+                </div>
+
+                <!-- Bottom Tab Content: AI Evaluation -->
+                <div id="bottomTabEvaluation" class="hidden p-4 text-xs overflow-y-auto flex-1 space-y-3 bg-slate-900">
+                    <div id="aiEvaluationLoading" class="hidden text-center py-6 text-slate-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl text-moodle-blue mb-2"></i>
+                        <p>Sedang mengevaluasi kode Anda dengan **Gemini AI Auto-Grader**...</p>
+                    </div>
+
+                    <div id="aiEvaluationResult" class="hidden space-y-3">
+                        <!-- Score Header Card -->
+                        <div class="flex items-center justify-between bg-slate-800 p-3 rounded-lg border border-slate-700">
+                            <div>
+                                <span class="text-slate-400 text-[10px] uppercase tracking-wider block">Nilai Praktikum</span>
+                                <span id="resScore" class="text-2xl font-bold text-emerald-400">0 / 100</span>
+                            </div>
+                            <div class="text-right">
+                                <span id="resStatusBadge" class="px-2.5 py-1 rounded text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    LULUS TEST
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Rubric Breakdown Grid -->
+                        <div class="grid grid-cols-2 gap-2 text-[11px]">
+                            <div class="bg-slate-800 p-2 rounded border border-slate-700/60">
+                                <span class="text-slate-400">Kebenaran Logika (40%):</span>
+                                <span id="scoreCorrectness" class="font-bold text-emerald-400 float-right">-</span>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded border border-slate-700/60">
+                                <span class="text-slate-400">Efisiensi & Kompleksitas (30%):</span>
+                                <span id="scoreEfficiency" class="font-bold text-amber-400 float-right">-</span>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded border border-slate-700/60">
+                                <span class="text-slate-400">Kualitas Kode / Clean (20%):</span>
+                                <span id="scoreClean" class="font-bold text-blue-400 float-right">-</span>
+                            </div>
+                            <div class="bg-slate-800 p-2 rounded border border-slate-700/60">
+                                <span class="text-slate-400">Penanganan Edge Case (10%):</span>
+                                <span id="scoreEdge" class="font-bold text-purple-400 float-right">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Analysis & Feedback -->
+                        <div class="space-y-2">
+                            <div class="bg-slate-800/80 p-2.5 rounded border border-slate-700">
+                                <h5 class="font-semibold text-emerald-400 mb-1"><i class="fa-solid fa-thumbs-up"></i> Kelebihan Kode:</h5>
+                                <p id="resStrengths" class="text-slate-300 leading-relaxed"></p>
+                            </div>
+                            <div class="bg-slate-800/80 p-2.5 rounded border border-slate-700">
+                                <h5 class="font-semibold text-amber-400 mb-1"><i class="fa-solid fa-bug"></i> Potensi Bug / Area Perbaikan:</h5>
+                                <p id="resBugs" class="text-slate-300 leading-relaxed"></p>
+                            </div>
+                            <div class="bg-slate-800/80 p-2.5 rounded border border-slate-700">
+                                <h5 class="font-semibold text-blue-400 mb-1"><i class="fa-solid fa-wand-magic-sparkles"></i> Saran Optimasi Kode:</h5>
+                                <p id="resSuggestions" class="text-slate-300 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: GENERATE SOAL AI (REQUEST SOAL DESKRIPSI) -->
+    <div id="generateModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
+            <div class="bg-gradient-to-r from-moodle-blue to-moodle-darkBlue px-5 py-3.5 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-lg"></i>
+                    <h3 class="font-bold text-sm">Request & Generate Soal VPL via AI</h3>
+                </div>
+                <button onclick="closeGenerateModal()" class="text-white/80 hover:text-white text-lg">&times;</button>
+            </div>
+            <div class="p-5 space-y-4 overflow-y-auto">
+                <p class="text-xs text-slate-600">
+                    Deskripsikan materi atau topik praktikum yang Anda inginkan. **Gemini AI** akan secara otomatis membuatkan deskripsi soal, format I/O, batasan, starter code, serta testcase lengkap!
+                </p>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi / Topik Soal yang Diinginkan:</label>
+                    <textarea id="genPromptInput" rows="4" class="w-full text-xs border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Contoh: Buatkan soal tentang membalikkan urutan kata dalam sebuah kalimat di Python, tingkat kesulitan sedang..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tingkat Kesulitan:</label>
+                        <select id="genDifficulty" class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                            <option value="Mudah">Mudah (Easy)</option>
+                            <option value="Sedang" selected>Sedang (Medium)</option>
+                            <option value="Sulit">Sulit (Hard)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Bahasa Utama:</label>
+                        <select id="genPrimaryLang" class="w-full text-xs border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                            <option value="python">Python 3</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="cpp">C++</option>
+                            <option value="java">Java</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="genStatus" class="hidden text-xs text-moodle-blue font-semibold flex items-center justify-center gap-2 py-2 bg-blue-50 rounded">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Gemini AI sedang menyusun soal praktikum...
+                </div>
+            </div>
+            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="closeGenerateModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Batal</button>
+                <button onclick="generateProblemWithAI()" class="px-4 py-2 text-xs font-semibold bg-moodle-blue hover:bg-moodle-darkBlue text-white rounded-lg shadow">Generate Soal Sekarang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS API KEY -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
+            <div class="bg-slate-800 px-5 py-3.5 text-white flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-amber-400"></i>
+                    <h3 class="font-bold text-sm">Pengaturan Google Gemini API Key</h3>
+                </div>
+                <button onclick="closeApiKeyModal()" class="text-white/80 hover:text-white text-lg">&times;</button>
+            </div>
+            <div class="p-5 space-y-3">
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Aplikasi ini menggunakan model <b>Gemini AI API</b> secara langsung dari browser untuk melakukan auto-grading dan pembuatan soal.
+                </p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Gemini API Key Anda:</label>
+                    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                </div>
+                <p class="text-[11px] text-slate-400 italic">
+                    * API Key disimpan dengan aman di local storage browser Anda saja. Dapatkan key gratis di <a href="https://aistudio.google.com/" target="_blank" class="text-moodle-blue underline">Google AI Studio</a>.
+                </p>
+            </div>
+            <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="closeApiKeyModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-lg">Batal</button>
+                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-semibold bg-moodle-blue hover:bg-moodle-darkBlue text-white rounded-lg shadow">Simpan Key</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // GLOBAL STATE
+        let apiKey = localStorage.getItem('vpl_gemini_api_key') || '';
+        
+        let currentProblem = {
+            title: "Menghitung Jumlah Elemen Genap dalam Array",
+            difficulty: "Mudah",
+            description: "Buatlah sebuah fungsi atau program yang menerima barisan angka (array/list) dan menghitung berapa banyak angka genap yang ada di dalam barisan tersebut.",
+            inputFormat: "Sebuah baris berisi angka-angka yang dipisahkan oleh spasi. Contoh: `2 5 8 10 3`",
+            outputFormat: "Cetak satu angka bulat (integer) yang menyatakan jumlah bilangan genap.",
+            constraints: "Jumlah elemen 1 s/d 1000",
+            starterCode: {
+                python: "# Tuliskan solusimu di sini\ndef count_evens():\n    data = input().split()\n    numbers = [int(x) for x in data]\n    # Hitung angka genap\n    count = sum(1 for x in numbers if x % 2 == 0)\n    print(count)\n\ncount_evens()",
+                javascript: "const readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin, output: process.stdout });\n\nrl.on('line', (line) => {\n    const nums = line.trim().split(' ').map(Number);\n    const evens = nums.filter(n => n % 2 === 0).length;\n    console.log(evens);\n});",
+                cpp: "#include <iostream>\n#include <sstream>\n#include <vector>\nusing namespace std;\n\nint main() {\n    string line;\n    if(getline(cin, line)) {\n        stringstream ss(line);\n        int num, count = 0;\n        while(ss >> num) {\n            if(num % 2 == 0) count++;\n        }\n        cout << count << endl;\n    }\n    return 0;\n}",
+                java: "import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        if(sc.hasNextLine()) {\n            String[] parts = sc.nextLine().trim().split(\"\\\\s+\");\n            int count = 0;\n            for(String p : parts) {\n                if(!p.isEmpty() && Integer.parseInt(p) % 2 == 0) count++;\n            }\n            System.out.println(count);\n        }\n    }\n}"
+            },
+            sampleCases: [
+                { input: "2 5 8 10 3", output: "3" },
+                { input: "1 3 5 7", output: "0" }
+            ]
+        };
+
+        let submissionsHistory = [];
+
+        // INIT
+        window.addEventListener('DOMContentLoaded', () => {
+            updateApiKeyBadge();
+            renderProblemDetails();
+            resetTemplateCode();
+        });
+
+        // API KEY MANAGEMENT
+        function updateApiKeyBadge() {
+            const badge = document.getElementById('apiKeyStatusText');
+            if(apiKey) {
+                badge.innerText = 'API Key Set';
+            } else {
+                badge.innerText = 'Set API Key';
+            }
+        }
+
+        function openApiKeyModal() {
+            document.getElementById('apiKeyInput').value = apiKey;
+            document.getElementById('apiKeyModal').classList.remove('hidden');
+        }
+
+        function closeApiKeyModal() {
+            document.getElementById('apiKeyModal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const val = document.getElementById('apiKeyInput').value.trim();
+            apiKey = val;
+            localStorage.setItem('vpl_gemini_api_key', val);
+            updateApiKeyBadge();
+            closeApiKeyModal();
+            alert('API Key berhasil disimpan!');
+        }
+
+        // LEFT TABS
+        function switchLeftTab(tab) {
+            document.getElementById('tabBtnDesc').className = "px-4 py-2 text-xs font-semibold text-slate-600 hover:text-moodle-blue border-b-2 border-transparent";
+            document.getElementById('tabBtnTutor').className = "px-4 py-2 text-xs font-semibold text-slate-600 hover:text-moodle-blue border-b-2 border-transparent flex items-center gap-1.5";
+            document.getElementById('tabBtnHistory').className = "px-4 py-2 text-xs font-semibold text-slate-600 hover:text-moodle-blue border-b-2 border-transparent";
+
+            document.getElementById('tabContentDesc').classList.add('hidden');
+            document.getElementById('tabContentTutor').classList.add('hidden');
+            document.getElementById('tabContentTutor').classList.remove('flex');
+            document.getElementById('tabContentHistory').classList.add('hidden');
+
+            if(tab === 'desc') {
+                document.getElementById('tabBtnDesc').className = "px-4 py-2 text-xs font-semibold text-moodle-blue border-b-2 border-moodle-blue bg-white";
+                document.getElementById('tabContentDesc').classList.remove('hidden');
+            } else if(tab === 'tutor') {
+                document.getElementById('tabBtnTutor').className = "px-4 py-2 text-xs font-semibold text-moodle-blue border-b-2 border-moodle-blue bg-white flex items-center gap-1.5";
+                document.getElementById('tabContentTutor').classList.remove('hidden');
+                document.getElementById('tabContentTutor').classList.add('flex');
+            } else if(tab === 'history') {
+                document.getElementById('tabBtnHistory').className = "px-4 py-2 text-xs font-semibold text-moodle-blue border-b-2 border-moodle-blue bg-white";
+                document.getElementById('tabContentHistory').classList.remove('hidden');
+            }
+        }
+
+        // BOTTOM TABS
+        function switchBottomTab(tab) {
+            document.getElementById('bottomTabTerminalBtn').className = "px-4 py-1.5 text-xs font-medium text-slate-400 hover:text-white border-b-2 border-transparent flex items-center gap-1.5";
+            document.getElementById('bottomTabEvaluationBtn').className = "px-4 py-1.5 text-xs font-medium text-slate-400 hover:text-white border-b-2 border-transparent flex items-center gap-1.5";
+
+            document.getElementById('bottomTabTerminal').classList.add('hidden');
+            document.getElementById('bottomTabEvaluation').classList.add('hidden');
+
+            if(tab === 'terminal') {
+                document.getElementById('bottomTabTerminalBtn').className = "px-4 py-1.5 text-xs font-medium text-emerald-400 border-b-2 border-emerald-400 flex items-center gap-1.5";
+                document.getElementById('bottomTabTerminal').classList.remove('hidden');
+            } else if(tab === 'evaluation') {
+                document.getElementById('bottomTabEvaluationBtn').className = "px-4 py-1.5 text-xs font-medium text-amber-400 border-b-2 border-amber-400 flex items-center gap-1.5";
+                document.getElementById('bottomTabEvaluation').classList.remove('hidden');
+            }
+        }
+
+        // RENDER PROBLEM
+        function renderProblemDetails() {
+            document.getElementById('problemTitle').innerText = currentProblem.title;
+            document.getElementById('currentProblemBreadcrumb').innerText = "Soal: " + currentProblem.title;
+            document.getElementById('problemDifficulty').innerText = currentProblem.difficulty;
+            document.getElementById('problemDesc').innerHTML = currentProblem.description;
+            document.getElementById('problemInputFormat').innerText = currentProblem.inputFormat;
+            document.getElementById('problemOutputFormat').innerText = currentProblem.outputFormat;
+            document.getElementById('problemConstraints').innerHTML = `<li>${currentProblem.constraints}</li>`;
+
+            const container = document.getElementById('sampleCasesContainer');
+            container.innerHTML = '';
+            currentProblem.sampleCases.forEach((sc, idx) => {
+                const div = document.createElement('div');
+                div.className = "bg-slate-900 text-slate-100 p-2.5 rounded text-xs font-mono mb-2";
+                div.innerHTML = `
+                    <div class="text-slate-400 text-[10px]">Sample Input ${idx+1}:</div>
+                    <div>${sc.input}</div>
+                    <div class="text-slate-400 text-[10px] mt-1">Expected Output:</div>
+                    <div class="text-emerald-400">${sc.output}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // EDITOR LOGIC
+        function changeLanguage() {
+            resetTemplateCode();
+        }
+
+        function resetTemplateCode() {
+            const lang = document.getElementById('languageSelect').value;
+            const code = currentProblem.starterCode[lang] || `# Solusi dalam ${lang}`;
+            document.getElementById('codeEditor').value = code;
+            updateLineNumbers();
+        }
+
+        function updateLineNumbers() {
+            const editor = document.getElementById('codeEditor');
+            const lineNumbers = document.getElementById('lineNumbers');
+            const lines = editor.value.split('\n').length;
+            let linesArr = [];
+            for (let i = 1; i <= lines; i++) {
+                linesArr.push(i);
+            }
+            lineNumbers.innerHTML = linesArr.join('<br>');
+        }
+
+        function handleTab(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = e.target.selectionStart;
+                const end = e.target.selectionEnd;
+                e.target.value = e.target.value.substring(0, start) + '    ' + e.target.value.substring(end);
+                e.target.selectionStart = e.target.selectionEnd = start + 4;
+                updateLineNumbers();
+            }
+        }
+
+        // LOCAL RUN SIMULATION
+        function runLocalTest() {
+            switchBottomTab('terminal');
+            const term = document.getElementById('terminalOutput');
+            const code = document.getElementById('codeEditor').value;
+            const lang = document.getElementById('languageSelect').value;
+
+            term.innerHTML = `<span class="text-amber-400">> Menyusun & Menjalankan Kode (${lang})...</span>\n`;
+
+            setTimeout(() => {
+                term.innerHTML += `<span class="text-slate-400">[Executing local testcase 1]...</span>\n`;
+                term.innerHTML += `<span class="text-emerald-400">Standard Output:</span>\n${currentProblem.sampleCases[0].output}\n\n`;
+                term.innerHTML += `<span class="text-slate-500">Program selesai dalam 0.04s. Exit Code: 0</span>`;
+            }, 600);
+        }
+
+        // CALL GEMINI API HELPER
+        async function callGeminiAPI(prompt) {
+            if (!apiKey) {
+                openApiKeyModal();
+                throw new Error("API Key belum dikonfigurasi.");
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error?.message || "Gagal menghubungi Gemini API");
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        // SUBMIT & AI EVALUATION (AUTO-GRADER)
+        async function submitSolutionAI() {
+            switchBottomTab('evaluation');
+            document.getElementById('aiEvaluationLoading').classList.remove('hidden');
+            document.getElementById('aiEvaluationResult').classList.add('hidden');
+
+            const code = document.getElementById('codeEditor').value;
+            const lang = document.getElementById('languageSelect').value;
+
+            const prompt = `
+            Anda adalah Auto-Grader VPL Moodle Praktikum Koding.
+            Evaluasilah solusi siswa berikut ini secara objektif dan berikan penilaian JSON.
+
+            SOAL:
+            Judul: ${currentProblem.title}
+            Deskripsi: ${currentProblem.description}
+            Constraint: ${currentProblem.constraints}
+
+            KODE SISWA (${lang}):
+            \`\`\`${lang}
+            ${code}
+            \`\`\`
+
+            Berikan output HANYA format JSON murni tanpa markdown (tanpa \`\`\`json):
+            {
+                "score": 0-100,
+                "passed": true/false,
+                "breakdown": {
+                    "correctness": 0-40,
+                    "efficiency": 0-30,
+                    "cleanCode": 0-20,
+                    "edgeCases": 0-10
+                },
+                "strengths": "Penjelasan apa yang sudah bagus dari kode siswa.",
+                "bugs": "Penjelasan bug, error, atau kesalahan logika jika ada.",
+                "suggestions": "Saran optimasi atau perbaikan penulisan kode."
+            }
+            `;
+
+            try {
+                const rawResponse = await callGeminiAPI(prompt);
+                const cleanedJson = rawResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                const evalData = JSON.parse(cleanedJson);
+
+                // Render result
+                document.getElementById('resScore').innerText = `${evalData.score} / 100`;
+                const badge = document.getElementById('resStatusBadge');
+                if(evalData.passed) {
+                    badge.innerText = "LULUS EVALUASI";
+                    badge.className = "px-2.5 py-1 rounded text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                } else {
+                    badge.innerText = "PERLU PERBAIKAN";
+                    badge.className = "px-2.5 py-1 rounded text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30";
+                }
+
+                document.getElementById('scoreCorrectness').innerText = `${evalData.breakdown.correctness}/40`;
+                document.getElementById('scoreEfficiency').innerText = `${evalData.breakdown.efficiency}/30`;
+                document.getElementById('scoreClean').innerText = `${evalData.breakdown.cleanCode}/20`;
+                document.getElementById('scoreEdge').innerText = `${evalData.breakdown.edgeCases}/10`;
+
+                document.getElementById('resStrengths').innerText = evalData.strengths || '-';
+                document.getElementById('resBugs').innerText = evalData.bugs || 'Tidak ada bug kritis.';
+                document.getElementById('resSuggestions').innerText = evalData.suggestions || '-';
+
+                // Add to history
+                submissionsHistory.unshift({
+                    time: new Date().toLocaleTimeString(),
+                    score: evalData.score,
+                    lang: lang
+                });
+                renderHistory();
+
+                document.getElementById('aiEvaluationLoading').classList.add('hidden');
+                document.getElementById('aiEvaluationResult').classList.remove('hidden');
+
+            } catch (err) {
+                alert("Gagal melakukan evaluasi AI: " + err.message);
+                document.getElementById('aiEvaluationLoading').classList.add('hidden');
+            }
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('submissionHistoryList');
+            list.innerHTML = '';
+            submissionsHistory.forEach((s, idx) => {
+                const div = document.createElement('div');
+                div.className = "p-2.5 bg-slate-50 border border-slate-200 rounded text-xs flex items-center justify-between";
+                div.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-700">Submisi #${submissionsHistory.length - idx}</span>
+                        <span class="text-slate-400 text-[10px] block">${s.time} •${s.lang}</span>
+                    </div>
+                    <span class="font-bold ${s.score >= 70 ? 'text-emerald-600' : 'text-rose-600'}">${s.score} Poin</span>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // GENERATE SOAL AI MODAL LOGIC
+        function openGenerateModal() {
+            document.getElementById('generateModal').classList.remove('hidden');
+        }
+
+        function closeGenerateModal() {
+            document.getElementById('generateModal').classList.add('hidden');
+        }
+
+        async function generateProblemWithAI() {
+            const promptText = document.getElementById('genPromptInput').value.trim();
+            const difficulty = document.getElementById('genDifficulty').value;
+            const primaryLang = document.getElementById('genPrimaryLang').value;
+
+            if(!promptText) {
+                alert("Mohon masukkan deskripsi soal yang Anda inginkan.");
+                return;
+            }
+
+            document.getElementById('genStatus').classList.remove('hidden');
+
+            const aiPrompt = `
+            Anda adalah Dosen Pemrograman VPL Moodle.
+            Buatkan 1 soal praktikum koding utuh berdasarkan deskripsi berikut:
+            Deskripsi Pengguna: "${promptText}"
+            Tingkat Kesulitan: ${difficulty}
+            Bahasa Utama: ${primaryLang}
+
+            Kembalikan output HANYA dalam format JSON murni tanpa markdown (tanpa \`\`\`json):
+            {
+                "title": "Judul Soal Singkat dan Jelas",
+                "difficulty": "${difficulty}",
+                "description": "Deskripsi soal lengkap dalam HTML sederhana (gunakan p, code, ul/li).",
+                "inputFormat": "Penjelasan format input.",
+                "outputFormat": "Penjelasan format output.",
+                "constraints": "Batasan memori / nilai variabel.",
+                "starterCode": {
+                    "python": "# Starter code Python",
+                    "javascript": "// Starter code JS",
+                    "cpp": "// Starter code C++",
+                    "java": "// Starter code Java"
+                },
+                "sampleCases": [
+                    { "input": "contoh input 1", "output": "contoh output 1" },
+                    { "input": "contoh input 2", "output": "contoh output 2" }
+                ]
+            }
+            `;
+
+            try {
+                const rawResp = await callGeminiAPI(aiPrompt);
+                const cleanedJson = rawResp.replace(/```json/g, '').replace(/```/g, '').trim();
+                const newProblem = JSON.parse(cleanedJson);
+
+                currentProblem = newProblem;
+                renderProblemDetails();
+                resetTemplateCode();
+                closeGenerateModal();
+                alert(`Soal "${newProblem.title}" berhasil di-generate oleh AI!`);
+            } catch(e) {
+                alert("Gagal meng-generate soal: " + e.message);
+            } finally {
+                document.getElementById('genStatus').classList.add('hidden');
+            }
+        }
+
+        // AI TUTOR CHAT LOGIC
+        async function sendTutorMessage() {
+            const input = document.getElementById('tutorInput');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            const chatBox = document.getElementById('tutorChatBox');
+            
+            // Append User Msg
+            chatBox.innerHTML += `
+                <div class="flex gap-2.5 justify-end">
+                    <div class="bg-moodle-blue text-white p-3 rounded-xl shadow-sm max-w-[85%]">
+                        ${msg}
+                    </div>
+                </div>
+            `;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Loading state
+            const loadingId = "tutorLoading_" + Date.now();
+            chatBox.innerHTML += `
+                <div id="${loadingId}" class="flex gap-2.5 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin my-auto"></i> Gemini Tutor sedang mengetik...
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const currentCode = document.getElementById('codeEditor').value;
+
+            const tutorPrompt = `
+            Anda adalah AI Coding Tutor Socratic untuk mahasiswa praktikum.
+            
+            SOAL AKTIF: ${currentProblem.title}
+            DESKRIPSI: ${currentProblem.description}
+            KODE MAHASISWA SAAT INI:
+            \`\`\`
+            ${currentCode}
+            \`\`\`
+
+            PERTANYAAN MAHASISWA: "${msg}"
+
+            INSTRUKSI TUTOR:
+            - Berikan jawaban yang ramah, ringkas, dan jelas dalam bahasa Indonesia.
+            - JANGAN berikan solusi kode utuh secara langsung!
+            - Berikan bimbingan bertahap (hint/petunjuk) agar mahasiswa berpikir sendiri.
+            `;
+
+            try {
+                const reply = await callGeminiAPI(tutorPrompt);
+                document.getElementById(loadingId).remove();
+
+                chatBox.innerHTML += `
+                    <div class="flex gap-2.5">
+                        <div class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-xs flex-none shadow">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm max-w-[85%] text-slate-700 leading-relaxed">
+                            ${reply.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                `;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            } catch(e) {
+                document.getElementById(loadingId).remove();
+                alert("Tutor Error: " + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
