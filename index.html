@@ -172,8 +172,8 @@
                             <i class="fa-solid fa-triangle-exclamation text-amber-500"></i> Batasan (Constraints)
                         </h4>
                         <ul id="problemConstraints" class="list-disc list-inside text-xs text-slate-600 space-y-1">
-                            <li>Jumlah elemen array $1 \le N \le 1000$</li>
-                            <li>Nilai tiap elemen $-10^5 \le \text{elemen} \le 10^5$</li>
+                            <li>Jumlah elemen array 1 s/d 1000</li>
+                            <li>Nilai tiap elemen -100000 s/d 100000</li>
                         </ul>
                     </div>
 
@@ -198,7 +198,7 @@
             <div id="tabContentTutor" class="hidden flex-col h-full bg-slate-50">
                 <div class="p-3 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
                     <i class="fa-solid fa-lightbulb text-amber-600 text-base"></i>
-                    <span>Tanyakan ke bingung-anmu! AI Tutor akan berikan <b>petunjuk (hint)</b> tanpa langsung memberikan seluruh kunci jawaban.</span>
+                    <span>Tanyakan kebimbanganmu! AI Tutor akan memberikan <b>petunjuk (hint)</b> tanpa langsung membocorkan seluruh kunci jawaban.</span>
                 </div>
 
                 <!-- Chat History -->
@@ -208,14 +208,14 @@
                             <i class="fa-solid fa-robot"></i>
                         </div>
                         <div class="bg-white border border-slate-200 p-3 rounded-xl shadow-sm max-w-[85%] text-slate-700">
-                            Halo! Ada kendala dengan soal ini? Kamu bisa tanya konsep, logika `if`, pemrosesan input, atau minta petunjuk error tanpa khawatir nilaimu berkurang.
+                            Halo! Ada kendala dengan soal ini? Kamu bisa bertanya konsep, logika `if`, cara membaca input, atau penjelasan error tanpa khawatir nilaimu berkurang.
                         </div>
                     </div>
                 </div>
 
                 <!-- Chat Input -->
                 <div class="p-3 bg-white border-t border-slate-200 flex gap-2">
-                    <input type="text" id="tutorInput" onkeydown="if(event.key==='Enter') sendTutorMessage()" placeholder="Contoh: Bagaimana cara cek angka genap di Python?" class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-moodle-blue">
+                    <input type="text" id="tutorInput" onkeydown="if(event.key==='Enter') sendTutorMessage()" placeholder="Contoh: Bagaimana cara mengecek angka genap di Java?" class="flex-1 text-xs border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-moodle-blue">
                     <button onclick="sendTutorMessage()" class="bg-moodle-blue hover:bg-moodle-darkBlue text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
@@ -290,7 +290,7 @@
 
                 <!-- Bottom Tab Content: Terminal -->
                 <div id="bottomTabTerminal" class="p-3 font-mono text-xs text-slate-300 flex-1 overflow-y-auto space-y-2">
-                    <div class="text-slate-500">// Jalankan "Run Output" atau "Submit & Evaluasi AI" untuk melihat hasil eksekusi program.</div>
+                    <div class="text-slate-500">// Klik "Run Output" atau "Submit & Evaluasi AI" untuk menjalankan pengujian kode.</div>
                     <div id="terminalOutput" class="whitespace-pre-wrap"></div>
                 </div>
 
@@ -342,7 +342,7 @@
                                 <p id="resStrengths" class="text-slate-300 leading-relaxed"></p>
                             </div>
                             <div class="bg-slate-800/80 p-2.5 rounded border border-slate-700">
-                                <h5 class="font-semibold text-amber-400 mb-1"><i class="fa-solid fa-bug"></i> Potensi Bug / Area Perbaikan:</h5>
+                                <h5 class="font-semibold text-amber-400 mb-1"><i class="fa-solid fa-bug"></i> Area Perbaikan / Potential Bugs:</h5>
                                 <p id="resBugs" class="text-slate-300 leading-relaxed"></p>
                             </div>
                             <div class="bg-slate-800/80 p-2.5 rounded border border-slate-700">
@@ -375,7 +375,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi / Topik Soal yang Diinginkan:</label>
-                    <textarea id="genPromptInput" rows="4" class="w-full text-xs border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Contoh: Buatkan soal tentang membalikkan urutan kata dalam sebuah kalimat di Python, tingkat kesulitan sedang..."></textarea>
+                    <textarea id="genPromptInput" rows="4" class="w-full text-xs border border-slate-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-moodle-blue" placeholder="Contoh: Buatkan soal tentang membalikkan urutan kata dalam sebuah kalimat di Java, tingkat kesulitan sedang..."></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -393,7 +393,7 @@
                             <option value="python">Python 3</option>
                             <option value="javascript">JavaScript</option>
                             <option value="cpp">C++</option>
-                            <option value="java">Java</option>
+                            <option value="java" selected>Java</option>
                         </select>
                     </div>
                 </div>
@@ -540,7 +540,7 @@
             }
         }
 
-        // RENDER PROBLEM
+        // RENDER PROBLEM DETAILS
         function renderProblemDetails() {
             document.getElementById('problemTitle').innerText = currentProblem.title;
             document.getElementById('currentProblemBreadcrumb').innerText = "Soal: " + currentProblem.title;
@@ -572,7 +572,7 @@
 
         function resetTemplateCode() {
             const lang = document.getElementById('languageSelect').value;
-            const code = currentProblem.starterCode[lang] || `# Solusi dalam ${lang}`;
+            const code = currentProblem.starterCode[lang] || `// Solusi dalam ${lang}`;
             document.getElementById('codeEditor').value = code;
             updateLineNumbers();
         }
@@ -603,7 +603,6 @@
         function runLocalTest() {
             switchBottomTab('terminal');
             const term = document.getElementById('terminalOutput');
-            const code = document.getElementById('codeEditor').value;
             const lang = document.getElementById('languageSelect').value;
 
             term.innerHTML = `<span class="text-amber-400">> Menyusun & Menjalankan Kode (${lang})...</span>\n`;
@@ -615,29 +614,45 @@
             }, 600);
         }
 
-        // CALL GEMINI API HELPER
+        // CALL GEMINI API HELPER (WITH MULTI-MODEL FALLBACK)
         async function callGeminiAPI(prompt) {
             if (!apiKey) {
                 openApiKeyModal();
                 throw new Error("API Key belum dikonfigurasi.");
             }
 
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
-            });
+            // Daftar model yang dicoba berurutan jika server sibuk / overload
+            const models = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+            let lastError = null;
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error?.message || "Gagal menghubungi Gemini API");
+            for (const model of models) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                            return data.candidates[0].content.parts[0].text;
+                        }
+                    }
+
+                    const errData = await response.json().catch(() => ({}));
+                    lastError = new Error(errData.error?.message || `Error pada model ${model} (Status:${response.status})`);
+                    console.warn(`Model ${model} gagal, mencoba model berikutnya...`, lastError.message);
+                } catch (err) {
+                    lastError = err;
+                    console.warn(`Gagal menghubungi model ${model}:`, err);
+                }
             }
 
-            const data = await response.json();
-            return data.candidates[0].content.parts[0].text;
+            throw lastError || new Error("Semua server Gemini AI sedang padat. Silakan coba lagi sebentar lagi.");
         }
 
         // SUBMIT & AI EVALUATION (AUTO-GRADER)
@@ -665,13 +680,13 @@
 
             Berikan output HANYA format JSON murni tanpa markdown (tanpa \`\`\`json):
             {
-                "score": 0-100,
-                "passed": true/false,
+                "score": 85,
+                "passed": true,
                 "breakdown": {
-                    "correctness": 0-40,
-                    "efficiency": 0-30,
-                    "cleanCode": 0-20,
-                    "edgeCases": 0-10
+                    "correctness": 38,
+                    "efficiency": 25,
+                    "cleanCode": 18,
+                    "edgeCases": 9
                 },
                 "strengths": "Penjelasan apa yang sudah bagus dari kode siswa.",
                 "bugs": "Penjelasan bug, error, atau kesalahan logika jika ada.",
@@ -796,9 +811,9 @@
                 renderProblemDetails();
                 resetTemplateCode();
                 closeGenerateModal();
-                alert(`Soal "${newProblem.title}" berhasil di-generate oleh AI!`);
+                alert(`Soal "${newProblem.title}" berhasil dibuat oleh AI!`);
             } catch(e) {
-                alert("Gagal meng-generate soal: " + e.message);
+                alert("Gagal membuat soal: " + e.message);
             } finally {
                 document.getElementById('genStatus').classList.add('hidden');
             }
@@ -848,8 +863,8 @@
 
             INSTRUKSI TUTOR:
             - Berikan jawaban yang ramah, ringkas, dan jelas dalam bahasa Indonesia.
-            - JANGAN berikan solusi kode utuh secara langsung!
-            - Berikan bimbingan bertahap (hint/petunjuk) agar mahasiswa berpikir sendiri.
+            - JANGAN berikan jawaban kode utuh secara langsung!
+            - Berikan bimbingan bertahap (hint/petunjuk) agar mahasiswa dapat berpikir dan menemukan solusinya sendiri.
             `;
 
             try {
